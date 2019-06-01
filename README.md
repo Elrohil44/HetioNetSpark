@@ -30,7 +30,11 @@ val spark: SparkSession = SparkSession.builder()
     .getOrCreate()
 ```
 
-## 2. Run with:
+## 2. Provide logic for spark application
+
+The main function is located in `src/main/scala/pl/edu/agh/Main`
+
+## 3. Run with:
 
 For unix like systems:
 ```bash
