@@ -2,7 +2,7 @@ package pl.edu.agh
 
 object Main extends SparkInit {
   def main(args: Array[String]): Unit = {
-    import org.neo4j.spark.{Neo4j}
+    import org.neo4j.spark.Neo4j
 
     val neo4j = Neo4j(sc = sc)
 
