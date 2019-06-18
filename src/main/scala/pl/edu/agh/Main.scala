@@ -7,8 +7,6 @@ object Main extends SparkInit {
     val neo4j = Neo4j(sc = sc)
 
     val graphFrame = neo4j
-      .partitions(4)
-      .batch(50)
       .rels("MATCH (a)-[r]->(b) RETURN ID(a) as src, ID(b) as dst, type(r) as relationship")
       .nodes("MATCH (n) RETURN ID(n) as id, labels(n)[0] as type", Map.empty)
       .loadGraphFrame
@@ -17,7 +15,6 @@ object Main extends SparkInit {
       .find("(a)-[e]->(b)")
       .filter("a.type = 'Compound'")
       .filter("b.type = 'Disease'")
-
 
   }
 }
