@@ -2,7 +2,7 @@ import org.apache.spark.rdd.RDD
 import scala.util.hashing.MurmurHash3
 import spark.implicits._
 import org.apache.spark.graphx.{Edge, Graph, VertexId}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.graphframes.GraphFrame
 
 val w = 0.4
@@ -59,12 +59,29 @@ def getMotifs(graphFrame: GraphFrame, metapath: List[String]): DataFrame = {
                     ndx: Int = 0,
                     dataFrame: DataFrame = graphFrame.find(getMotifString(metapath))): DataFrame = metapath match {
     case n0 :: r0 :: rest => getDataFrame(rest, ndx + 1, dataFrame.filter(s"n$ndx.attr._2 = '$n0'").filter(s"r$ndx.attr = '$r0'"))
-    case n0 :: Nil => dataFrame.filter(s"n$ndx.attr._2 = '$n0'")
+    case n0 :: Nil => dataFrame.
+      filter(s"n$ndx.attr._2 = '$n0'").
+      filter("n0.attr._1 = 'Furosemide'")
   }
 
   getDataFrame(metapath)
 }
 
-exampleMetapaths.map(metapath => getMotifs(graphFrame, metapath).
-map
+def calculatePDP(path: List[Row], ndx: Long = 0, pdp: Double = 1): Double = path match {
+  case x :: y :: rest => ndx % 2 match {
+    case 0 => calculatePDP(y :: rest, ndx + 1, pdp * scala.math.pow(degreesMap(y.getString(2))(x.getLong(0)), -w))
+    case _ => calculatePDP(y :: rest, ndx + 1, pdp * scala.math.pow(degreesMap(x.getString(2))(y.getLong(0)), -w))
+  }
+  case node :: Nil => pdp
+}
+
+val dwpcsRdd = exampleMetapaths.map(metapath => getMotifs(graphFrame, metapath).
+  map(row => (
+    (row.getStruct(0).getStruct(1).getString(0), row.getStruct(row.length - 1).getStruct(1).getString(0)),
+    calculatePDP(row.toSeq.toList.asInstanceOf[List[Row]])
+  )).
+  rdd.
+  reduceByKey(_ + _)
 )
+
+val DWPCs = dwpcsRdd.map(_.collectAsync).map(_.get)

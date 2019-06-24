@@ -27,6 +27,7 @@ def getQuery(path: List[String]): String = {
 
   s"""
      |MATCH path = ${getMatch(path)}
+     |WHERE n0.name = "Furosemide"
      |WITH [
      |${getWith(path)}
      |] AS degrees, path, n0 as compound, n${path.length / 2} as disease
